@@ -114,3 +114,55 @@ resource "azapi_resource" "aca" {
     }
   })
 }
+
+resource "azurerm_api_management" "apim" {
+  name                = "mbcapim"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  publisher_name      = "Vineyard Company"
+  publisher_email     = "publisher@vineyard.local"
+
+  sku_name = "Developer_1"
+}
+
+resource "azurerm_api_management_api_version_set" "apimwineapivs" {
+  name                = "apimwineapivs"
+  resource_group_name = azurerm_resource_group.rg.name
+  api_management_name = azurerm_api_management.apim.name
+  display_name        = "Wines API"
+  versioning_scheme   = "Segment"
+}
+
+resource "azurerm_api_management_api" "apimwineapiv1" {
+  name                = "wineapiv1"
+  resource_group_name = azurerm_resource_group.rg.name
+  api_management_name = azurerm_api_management.apim.name
+  revision            = "1"
+  display_name        = "Wines API"
+  path                = "wines"
+  version             = "v1"
+  version_set_id      = azurerm_api_management_api_version_set.apimwineapivs.id
+  protocols           = ["http", "https"]
+
+  import {
+    content_format = "openapi+json"
+    content_value  = file("${path.module}/swagger.v1.json")
+  }
+}
+
+resource "azurerm_api_management_api" "api_v2" {
+  name                = "wineapiv2"
+  resource_group_name = azurerm_resource_group.rg.name
+  api_management_name = azurerm_api_management.apim.name
+  revision            = "2"
+  display_name        = "Wines API"
+  path                = "wines"
+  version             = "v2"
+  version_set_id      = azurerm_api_management_api_version_set.apimwineapivs.id
+  protocols           = ["http", "https"]
+
+  import {
+    content_format = "openapi+json"
+    content_value  = file("${path.module}/swagger.v2.json")
+  }
+}
